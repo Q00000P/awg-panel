@@ -15,6 +15,7 @@ import type { ID } from '#server/utils/types';
 import { wg } from '#server/utils/wgHelper';
 import type { DBType } from '#db/sqlite';
 import { wgInterface, userConfig } from '#db/schema';
+import { DEFAULT_INTERFACE } from '#server/utils/types';
 
 function createPreparedStatement(db: DBType) {
   return {
@@ -52,8 +53,11 @@ export class ClientService {
   /**
    * Never return values directly from this function. Use {@link getAllPublic} instead.
    */
-  async getAll() {
-    const result = await this.#statements.findAll.execute();
+  async getAll(interfaceId?: string) {
+    const all = await this.#statements.findAll.execute();
+    const result = interfaceId
+      ? all.filter((row) => row.interfaceId === interfaceId)
+      : all;
     return result.map((row) => ({
       ...row,
       createdAt: new Date(row.createdAt),
@@ -153,16 +157,20 @@ export class ClientService {
     return this.#statements.findById.execute({ id });
   }
 
-  async create({ name, expiresAt }: ClientCreateType) {
+  async create({ name, expiresAt, interfaceId }: ClientCreateType) {
+    const ifaceName = interfaceId ?? DEFAULT_INTERFACE;
     const privateKey = await wg.generatePrivateKey();
     const publicKey = await wg.getPublicKey(privateKey);
     const preSharedKey = await wg.generatePreSharedKey();
 
     return this.#db.transaction(async (tx) => {
-      const clients = await tx.query.client.findMany().execute();
+      // Addresses are unique per interface, so only look at this one's clients
+      const clients = await tx.query.client
+        .findMany({ where: eq(client.interfaceId, ifaceName) })
+        .execute();
       const clientInterface = await tx.query.wgInterface
         .findFirst({
-          where: eq(wgInterface.name, 'wg0'),
+          where: eq(wgInterface.name, ifaceName),
         })
         .execute();
 
@@ -191,7 +199,7 @@ export class ClientService {
           name,
           // TODO: properly assign user id
           userId: 1,
-          interfaceId: 'wg0',
+          interfaceId: ifaceName,
           expiresAt,
           privateKey,
           publicKey,
@@ -226,9 +234,17 @@ export class ClientService {
 
   update(id: ID, data: UpdateClientType) {
     return this.#db.transaction(async (tx) => {
+      const existing = await tx.query.client
+        .findFirst({ where: eq(client.id, id) })
+        .execute();
+
+      if (!existing) {
+        throw new Error('Client not found');
+      }
+
       const clientInterface = await tx.query.wgInterface
         .findFirst({
-          where: eq(wgInterface.name, 'wg0'),
+          where: eq(wgInterface.name, existing.interfaceId),
         })
         .execute();
 
@@ -264,7 +280,7 @@ export class ClientService {
       .values({
         name,
         userId: 1,
-        interfaceId: 'wg0',
+        interfaceId: DEFAULT_INTERFACE,
         privateKey,
         publicKey,
         preSharedKey,

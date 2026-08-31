@@ -1,9 +1,10 @@
-import { createError, defineEventHandler, getHeader } from 'h3';
+import { createError, defineEventHandler, getHeader, getQuery } from 'h3';
 import type { EventHandlerRequest, EventHandlerResponse, H3Event } from 'h3';
 
 import Database from '#server/utils/Database';
 import { isPasswordValid } from '#server/utils/password';
 import { getCurrentUser } from '#server/utils/session';
+import { DEFAULT_INTERFACE, InterfaceNameSchema } from '#server/utils/types';
 import type { UserType } from '#db/repositories/user/types';
 import type { SetupStepType } from '#db/repositories/general/types';
 import {
@@ -87,6 +88,22 @@ type SetupHandler<
 /**
  * check if the setup is done, if not, run the handler
  */
+/**
+ * Which interface an admin request targets: `?interface=awg1`.
+ * Absent = the default one, so the pre-multi-interface UI keeps working.
+ */
+export function getInterfaceParam(event: H3Event): string {
+  const raw = getQuery(event).interface;
+  if (raw === undefined || raw === null || raw === '') {
+    return DEFAULT_INTERFACE;
+  }
+  const parsed = InterfaceNameSchema.safeParse(String(raw));
+  if (!parsed.success) {
+    throw createError({ statusCode: 400, statusMessage: 'Invalid interface' });
+  }
+  return parsed.data;
+}
+
 export const defineSetupEventHandler = <
   TReq extends EventHandlerRequest,
   TRes extends EventHandlerResponse,

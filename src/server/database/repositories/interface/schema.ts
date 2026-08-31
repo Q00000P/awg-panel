@@ -31,6 +31,25 @@ export const wgInterface = sqliteTable('interfaces_table', {
   i3: text(),
   i4: text(),
   i5: text(),
+  // --- AmneziaWG 3.1 ---
+  // Server-side: must match on both ends. null = 2.0 mode.
+  // 'auto' at startup = generate once via `awg genkey`.
+  headerProtectionKey: text('header_protection_key'),
+  // Client-side ranges "min-max"; rendered on both ends like Amnezia does.
+  contentPaddingAddition: text('content_padding_addition'),
+  rekeyAfterTime: text('rekey_after_time'),
+  rekeyTimeout: text('rekey_timeout'),
+  rejectAfterTime: text('reject_after_time'),
+  keepaliveTimeout: text('keepalive_timeout'),
+  maxHandshakeAttempts: text('max_handshake_attempts'),
+  // Must match on both ends: receiver drops trailered handshakes otherwise.
+  randomTrailers: int('random_trailers', { mode: 'boolean' })
+    .notNull()
+    .default(false),
+  // Server-only, only under load. Kills cookie-reply AND per-IP rate limiter.
+  disableCookies: int('disable_cookies', { mode: 'boolean' })
+    .notNull()
+    .default(false),
   // does nothing yet
   enabled: int({ mode: 'boolean' }).notNull(),
   // Enable per-client firewall filtering via iptables

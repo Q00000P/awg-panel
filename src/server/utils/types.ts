@@ -99,10 +99,59 @@ export const RoutingTableSchema = z
     message: t('zod.interface.routingTable'),
   });
 
+// int or "min-max" range (AWG 3.1). Stored as text.
 export const PersistentKeepaliveSchema = z
-  .number({ message: t('zod.persistentKeepalive') })
-  .min(0, t('zod.persistentKeepalive'))
-  .max(65535, t('zod.persistentKeepalive'));
+  .union([z.number(), z.string()])
+  .transform((v) => String(v).replace(/\s+/g, ''))
+  .refine(
+    (v) => {
+      const m = /^(\d+)(?:-(\d+))?$/.exec(v);
+      if (!m) return false;
+      const lo = Number(m[1]);
+      const hi = m[2] !== undefined ? Number(m[2]) : lo;
+      return lo <= hi && hi <= 65535;
+    },
+    { message: t('zod.persistentKeepalive') }
+  );
+
+// --- AmneziaWG 3.1 ---
+
+// "min-max" seconds/bytes range, or empty for "not set"
+export const RangeSchema = z
+  .string()
+  .transform((v) => v.replace(/\s+/g, ''))
+  .refine(
+    (v) => {
+      if (!v) return true;
+      const m = /^(\d+)-(\d+)$/.exec(v);
+      return !!m && Number(m[1]) <= Number(m[2]);
+    },
+    { message: t('zod.awg.range') }
+  )
+  .transform((v) => (v ? v : null))
+  .nullable();
+
+// base64 32-byte key, or 'auto' (generated at next startup), or empty (2.0 mode)
+export const HeaderProtectionKeySchema = z
+  .string()
+  .transform((v) => v.trim())
+  .refine((v) => !v || v === 'auto' || /^[A-Za-z0-9+/]{43}=$/.test(v), {
+    message: t('zod.awg.headerProtectionKey'),
+  })
+  .transform((v) => (v ? v : null))
+  .nullable();
+
+/**
+ * Name of the interface used when no explicit one is given.
+ * Multi-interface call sites pass a name; legacy ones fall back to this.
+ */
+export const DEFAULT_INTERFACE = 'wg0';
+
+export const InterfaceNameSchema = z
+  .string()
+  .min(1)
+  .max(15)
+  .regex(/^[a-z][a-z0-9_-]*$/, { message: t('zod.interface.name') });
 
 export const AddressSchema = z
   .string({ message: t('zod.address') })

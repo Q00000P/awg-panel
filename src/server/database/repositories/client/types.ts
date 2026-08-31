@@ -6,6 +6,7 @@ import type { client } from './schema';
 
 import {
   AddressSchema,
+  InterfaceNameSchema,
   AllowedIpsSchema,
   DnsSchema,
   EnabledSchema,
@@ -71,6 +72,8 @@ const serverAllowedIps = z.array(AddressSchema, {
 export const ClientCreateSchema = z.object({
   name: name,
   expiresAt: expiresAt,
+  /** Which interface the client belongs to. Omitted = default interface. */
+  interfaceId: InterfaceNameSchema.optional(),
 });
 
 export type ClientCreateType = z.infer<typeof ClientCreateSchema>;

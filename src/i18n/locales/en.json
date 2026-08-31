@@ -133,7 +133,8 @@
     "firewallIps": "Firewall Allowed IPs",
     "firewallIpsDesc": "Destination IPs/CIDRs this client can access (server-side enforcement). Leave empty to use Allowed IPs. Supports optional port and protocol filtering. See docs for syntax.",
     "downloadPng": "Download PNG",
-    "copyPng": "Copy PNG"
+    "copyPng": "Copy PNG",
+    "interface": "Interface"
   },
   "dialog": {
     "change": "Change",
@@ -245,7 +246,8 @@
       "cidr": "CIDR",
       "device": "Device",
       "cidrValid": "CIDR must be valid",
-      "routingTable": "Routing table must be auto, off, or a table number"
+      "routingTable": "Routing table must be auto, off, or a table number",
+      "name": "Interface name must be lowercase letters, digits, - or _"
     },
     "otl": "One Time link",
     "stringMalformed": "String is malformed",
@@ -254,11 +256,15 @@
     "enabled": "Enabled",
     "mtu": "MTU",
     "port": "Port",
-    "persistentKeepalive": "Persistent Keepalive",
+    "persistentKeepalive": "Persistent Keepalive: number or range min-max",
     "address": "IP Address",
     "dns": "DNS",
     "allowedIps": "Allowed IPs",
-    "file": "File"
+    "file": "File",
+    "awg": {
+      "range": "Must be a range min-max (e.g. 10-100) or empty",
+      "headerProtectionKey": "Must be a base64 key, 'auto', or empty"
+    }
   },
   "hooks": {
     "preUp": "PreUp",
@@ -306,6 +312,25 @@
     "i5Label": "Special junk packet 5 (I5)",
     "i5Description": "Protocol mimic packet in hex format: <b 0x...>",
     "mtuNote": "Values depend on the MTU",
-    "obfuscationParameters": "AmneziaWG Obfuscation Parameters"
+    "obfuscationParameters": "AmneziaWG Obfuscation Parameters",
+    "awg31Parameters": "AmneziaWG 3.1 Parameters",
+    "headerProtectionKeyLabel": "Header protection key",
+    "headerProtectionKeyDescription": "Enables AWG 3.1 header protection. Empty = AWG 2.0 mode. Type 'auto' to generate a key on next restart. Must match on all clients — reissue configs after changing. Requires S1-S4 >= 12; H1-H4 are then rendered as 1/2/3/4",
+    "contentPaddingAdditionLabel": "Content padding addition",
+    "contentPaddingAdditionDescription": "Random extra padding per packet, range min-max (e.g. 10-100). Does not affect MTU: clamped to the largest packet already sent",
+    "rekeyAfterTimeLabel": "Rekey after time",
+    "rekeyAfterTimeDescription": "Seconds before a client initiates a new handshake, range (e.g. 100-120). WireGuard default is a fixed 120",
+    "rekeyTimeoutLabel": "Rekey timeout",
+    "rekeyTimeoutDescription": "Seconds between handshake retries, range (e.g. 3-7). WireGuard default is a fixed 5",
+    "rejectAfterTimeLabel": "Reject after time",
+    "rejectAfterTimeDescription": "Seconds after which a session is force-rekeyed, range (e.g. 200-240). Keep min at least 60 s above RekeyAfterTime max",
+    "keepaliveTimeoutLabel": "Keepalive timeout",
+    "keepaliveTimeoutDescription": "Idle seconds before a keepalive is sent, range (e.g. 5-15). WireGuard default is a fixed 10",
+    "maxHandshakeAttemptsLabel": "Max handshake attempts",
+    "maxHandshakeAttemptsDescription": "Handshake retry limit, range (e.g. 5-8). attempts x RekeyTimeout should stay below RejectAfterTime",
+    "randomTrailersLabel": "Random trailers",
+    "randomTrailersDescription": "Append random bytes to packets. Must match on both ends — a server without it rejects trailered handshakes. Ignored on data packets when ContentPaddingAddition is set",
+    "disableCookiesLabel": "Disable cookies",
+    "disableCookiesDescription": "Server-only. Under load, disables cookie replies AND the per-IP rate limiter. Hides a probing fingerprint but removes handshake-flood protection"
   }
 }

@@ -1,5 +1,6 @@
 <template>
   <main v-if="data">
+    <AdminInterfaceSelect />
     <FormElement @submit.prevent="submit">
       <FormGroup>
         <FormNumberField
@@ -130,6 +131,63 @@
           :description="$t('awg.i5Description')"
         />
       </FormGroup>
+      <FormGroup v-if="globalStore.information?.isAwg">
+        <FormHeading>{{ $t('awg.awg31Parameters') }}</FormHeading>
+        <FormNullTextField
+          id="headerProtectionKey"
+          v-model="data.headerProtectionKey"
+          :label="$t('awg.headerProtectionKeyLabel')"
+          :description="$t('awg.headerProtectionKeyDescription')"
+        />
+        <FormNullTextField
+          id="contentPaddingAddition"
+          v-model="data.contentPaddingAddition"
+          :label="$t('awg.contentPaddingAdditionLabel')"
+          :description="$t('awg.contentPaddingAdditionDescription')"
+        />
+        <FormNullTextField
+          id="rekeyAfterTime"
+          v-model="data.rekeyAfterTime"
+          :label="$t('awg.rekeyAfterTimeLabel')"
+          :description="$t('awg.rekeyAfterTimeDescription')"
+        />
+        <FormNullTextField
+          id="rekeyTimeout"
+          v-model="data.rekeyTimeout"
+          :label="$t('awg.rekeyTimeoutLabel')"
+          :description="$t('awg.rekeyTimeoutDescription')"
+        />
+        <FormNullTextField
+          id="rejectAfterTime"
+          v-model="data.rejectAfterTime"
+          :label="$t('awg.rejectAfterTimeLabel')"
+          :description="$t('awg.rejectAfterTimeDescription')"
+        />
+        <FormNullTextField
+          id="keepaliveTimeout"
+          v-model="data.keepaliveTimeout"
+          :label="$t('awg.keepaliveTimeoutLabel')"
+          :description="$t('awg.keepaliveTimeoutDescription')"
+        />
+        <FormNullTextField
+          id="maxHandshakeAttempts"
+          v-model="data.maxHandshakeAttempts"
+          :label="$t('awg.maxHandshakeAttemptsLabel')"
+          :description="$t('awg.maxHandshakeAttemptsDescription')"
+        />
+        <FormSwitchField
+          id="randomTrailers"
+          v-model="data.randomTrailers"
+          :label="$t('awg.randomTrailersLabel')"
+          :description="$t('awg.randomTrailersDescription')"
+        />
+        <FormSwitchField
+          id="disableCookies"
+          v-model="data.disableCookies"
+          :label="$t('awg.disableCookiesLabel')"
+          :description="$t('awg.disableCookiesDescription')"
+        />
+      </FormGroup>
       <FormGroup>
         <FormHeading>{{ $t('admin.interface.firewall') }}</FormHeading>
         <FormSwitchField
@@ -175,16 +233,25 @@ const globalStore = useGlobalStore();
 
 const { t } = useI18n();
 
+const { query: ifaceQuery } = useAdminInterface();
+
 const { data: _data, refresh } = await useFetch(`/api/admin/interface`, {
   method: 'get',
+  query: ifaceQuery,
+  watch: [ifaceQuery],
 });
 
 const data = toRef(_data.value);
+
+watch(_data, (v) => {
+  data.value = v;
+});
 
 const _submit = useSubmit(
   (data) =>
     $fetch(`/api/admin/interface`, {
       method: 'post',
+      query: ifaceQuery.value,
       body: data,
     }),
   {
@@ -211,6 +278,7 @@ const _changeCidr = useSubmit(
   (data) =>
     $fetch(`/api/admin/interface/cidr`, {
       method: 'post',
+      query: ifaceQuery.value,
       body: data,
     }),
   {

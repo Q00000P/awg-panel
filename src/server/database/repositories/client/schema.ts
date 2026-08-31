@@ -42,7 +42,8 @@ export const client = sqliteTable(
     firewallIps: text('firewall_ips', { mode: 'json' }).$type<
       string[] | null
     >(),
-    persistentKeepalive: int('persistent_keepalive').notNull(),
+    // int or "min-max" range (AWG 3.1)
+    persistentKeepalive: text('persistent_keepalive').notNull(),
     mtu: int().notNull(),
     jC: int('j_c'),
     jMin: int('j_min'),

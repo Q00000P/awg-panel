@@ -4,7 +4,10 @@ import Database from '#server/utils/Database';
 import WireGuard from '#server/utils/WireGuard';
 import { WG_ENV } from '#server/utils/config';
 import { firewall } from '#server/utils/firewall';
-import { definePermissionEventHandler } from '#server/utils/handler';
+import {
+  definePermissionEventHandler,
+  getInterfaceParam,
+} from '#server/utils/handler';
 import { validateZod } from '#server/utils/types';
 import { InterfaceUpdateSchema } from '#db/repositories/interface/types';
 
@@ -36,7 +39,7 @@ export default definePermissionEventHandler(
       }
     }
 
-    await Database.interfaces.update(data);
+    await Database.interfaces.update(data, getInterfaceParam(event));
     await WireGuard.saveConfig();
     return { success: true };
   }

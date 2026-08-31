@@ -13,6 +13,7 @@
           >
             <div>
               <ClientCardAddress :client="client" />
+              <ClientCardInterface :client="client" />
             </div>
             <div>
               <ClientCardLastSeen :client="client" />

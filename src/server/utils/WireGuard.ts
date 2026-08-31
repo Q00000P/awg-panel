@@ -23,18 +23,19 @@ class WireGuard {
    * Save and sync config
    */
   async saveConfig() {
-    const wgInterface = await Database.interfaces.get();
-    await this.#saveWireguardConfig(wgInterface);
-    await this.#syncWireguardConfig(wgInterface);
-    await this.#applyFirewallRules(wgInterface);
+    for (const wgInterface of await Database.interfaces.getAllEnabled()) {
+      await this.#saveWireguardConfig(wgInterface);
+      await this.#syncWireguardConfig(wgInterface);
+      await this.#applyFirewallRules(wgInterface);
+    }
   }
 
   /**
    * Apply firewall rules based on current config
    */
   async #applyFirewallRules(wgInterface: InterfaceType) {
-    const clients = await Database.clients.getAll();
-    const userConfig = await Database.userConfigs.get();
+    const clients = await Database.clients.getAll(wgInterface.name);
+    const userConfig = await Database.userConfigs.get(wgInterface.name);
     await firewall.rebuildRules(
       wgInterface,
       clients,
@@ -49,8 +50,8 @@ class WireGuard {
    * Make sure to pass an updated InterfaceType object
    */
   async #saveWireguardConfig(wgInterface: InterfaceType) {
-    const clients = await Database.clients.getAll();
-    const hooks = await Database.hooks.get();
+    const clients = await Database.clients.getAll(wgInterface.name);
+    const hooks = await Database.hooks.get(wgInterface.name);
 
     const result = [];
     result.push(
@@ -90,8 +91,6 @@ class WireGuard {
   }
 
   async getClientsForUser(userId: ID, query: ClientQueryType) {
-    const wgInterface = await Database.interfaces.get();
-
     const dbClients = await Database.clients.getAllForUser(userId, query);
 
     const clients = dbClients.map((client) => ({
@@ -102,25 +101,34 @@ class WireGuard {
       transferTx: null as number | null,
     }));
 
-    // Loop WireGuard status
-    const dump = await wg.dump(wgInterface.name);
-    return mergeClientStatuses(clients, dump);
+    return mergeClientStatuses(clients, await this.#dumpAll());
   }
 
   async dumpByPublicKey(publicKey: string) {
-    const wgInterface = await Database.interfaces.get();
+    // A public key is unique across interfaces, so scan them all
+    for (const wgInterface of await Database.interfaces.getAllEnabled()) {
+      const dump = await wg.dump(wgInterface.name).catch(() => []);
+      const clientDump = dump.find(
+        ({ publicKey: dumpPublicKey }) => dumpPublicKey === publicKey
+      );
+      if (clientDump) {
+        return clientDump;
+      }
+    }
 
-    const dump = await wg.dump(wgInterface.name);
-    const clientDump = dump.find(
-      ({ publicKey: dumpPublicKey }) => dumpPublicKey === publicKey
-    );
+    return undefined;
+  }
 
-    return clientDump;
+  /** Merged live status of every enabled interface. */
+  async #dumpAll() {
+    const dumps = [];
+    for (const wgInterface of await Database.interfaces.getAllEnabled()) {
+      dumps.push(...(await wg.dump(wgInterface.name).catch(() => [])));
+    }
+    return dumps;
   }
 
   async getAllClients(query: ClientQueryType = {}) {
-    const wgInterface = await Database.interfaces.get();
-
     const dbClients = await Database.clients.getAllPublic(query);
 
     const clients = dbClients.map((client) => ({
@@ -131,20 +139,19 @@ class WireGuard {
       transferTx: null as number | null,
     }));
 
-    // Loop WireGuard status
-    const dump = await wg.dump(wgInterface.name);
-    return mergeClientStatuses(clients, dump);
+    return mergeClientStatuses(clients, await this.#dumpAll());
   }
 
   async getClientConfiguration({ clientId }: { clientId: ID }) {
-    const wgInterface = await Database.interfaces.get();
-    const userConfig = await Database.userConfigs.get();
-
     const client = await Database.clients.get(clientId);
 
     if (!client) {
       throw new Error('Client not found');
     }
+
+    // Config must come from the interface this client actually lives on
+    const wgInterface = await Database.interfaces.get(client.interfaceId);
+    const userConfig = await Database.userConfigs.get(client.interfaceId);
 
     return wg.generateClientConfig(wgInterface, userConfig, client, {
       enableIpv6: !WG_ENV.DISABLE_IPV6,
@@ -166,20 +173,35 @@ class WireGuard {
 
   async Startup() {
     WG_DEBUG('Starting WireGuard...');
+
+    for (const iface of await Database.interfaces.getAllEnabled()) {
+      await this.#startupInterface(iface.name);
+    }
+
+    WG_DEBUG('Starting Cron Job...');
+    await this.startCronJob();
+    WG_DEBUG('Cron Job started successfully.');
+  }
+
+  /**
+   * Bring a single interface up: generate missing keys and obfuscation
+   * parameters, write the config, start it, then apply firewall rules.
+   */
+  async #startupInterface(name: string) {
     // let as it has to refetch if keys change
-    let wgInterface = await Database.interfaces.get();
+    let wgInterface = await Database.interfaces.get(name);
 
     // default interface has no keys
     if (
       wgInterface.privateKey === '---default---' &&
       wgInterface.publicKey === '---default---'
     ) {
-      WG_DEBUG('Generating new Wireguard Keys...');
+      WG_DEBUG(`Generating new Wireguard Keys for ${name}...`);
       const privateKey = await wg.generatePrivateKey();
       const publicKey = await wg.getPublicKey(privateKey);
 
-      await Database.interfaces.updateKeyPair(privateKey, publicKey);
-      wgInterface = await Database.interfaces.get();
+      await Database.interfaces.updateKeyPair(privateKey, publicKey, name);
+      wgInterface = await Database.interfaces.get(name);
       WG_DEBUG('New Wireguard Keys generated successfully.');
     }
 
@@ -197,20 +219,37 @@ class WireGuard {
       wgInterface.h3 = String(h3)!;
       wgInterface.h4 = String(h4)!;
 
-      Database.interfaces.update(wgInterface);
+      await Database.interfaces.update(wgInterface, name);
     }
 
-    WG_DEBUG(`Starting Wireguard Interface ${wgInterface.name}...`);
+    // AWG 3.1: 'auto' = generate the shared header-protection key once.
+    // Kept out of env/config files on purpose — it lives only in the DB.
+    if (wgInterface.headerProtectionKey === 'auto') {
+      WG_DEBUG(`Generating AmneziaWG 3.1 header protection key for ${name}...`);
+      const hpk = await wg.generatePrivateKey().catch(() => '');
+      // Never overwrite 'auto' with nothing. Silently dropping header
+      // protection would leave the server on 2.0 while clients still expect
+      // 3.1, which fails as an unexplained handshake timeout.
+      if (!hpk?.trim()) {
+        throw new Error(
+          `Failed to generate header protection key for ${name}. Is awg installed?`
+        );
+      }
+      wgInterface.headerProtectionKey = hpk.trim();
+      await Database.interfaces.update(wgInterface, name);
+    }
+
+    WG_DEBUG(`Starting Wireguard Interface ${name}...`);
     await this.#saveWireguardConfig(wgInterface);
-    await wg.down(wgInterface.name).catch(() => {});
-    await wg.up(wgInterface.name).catch((err) => {
+    await wg.down(name).catch(() => {});
+    await wg.up(name).catch((err) => {
       if (
         err &&
         err.message &&
-        err.message.includes(`Cannot find device "${wgInterface.name}"`)
+        err.message.includes(`Cannot find device "${name}"`)
       ) {
         throw new Error(
-          `WireGuard exited with the error: Cannot find device "${wgInterface.name}"\nThis usually means that your host's kernel does not support WireGuard!`,
+          `WireGuard exited with the error: Cannot find device "${name}"\nThis usually means that your host's kernel does not support WireGuard!`,
           { cause: err.message }
         );
       }
@@ -218,7 +257,7 @@ class WireGuard {
       throw err;
     });
     await this.#syncWireguardConfig(wgInterface);
-    WG_DEBUG(`Wireguard Interface ${wgInterface.name} started successfully.`);
+    WG_DEBUG(`Wireguard Interface ${name} started successfully.`);
 
     // Check if firewall was enabled but iptables isn't available
     if (wgInterface.firewallEnabled) {
@@ -229,18 +268,14 @@ class WireGuard {
         console.warn(
           `WARNING: Per-Client Firewall is enabled but ${requiredTools} is not available. Disabling firewall feature. Please install ${requiredTools} to use this feature.`
         );
-        await Database.interfaces.setFirewallEnabled(false);
+        await Database.interfaces.setFirewallEnabled(false, name);
         wgInterface.firewallEnabled = false; // Update local copy
       }
     }
 
-    WG_DEBUG('Applying firewall rules...');
+    WG_DEBUG(`Applying firewall rules for ${name}...`);
     await this.#applyFirewallRules(wgInterface);
     WG_DEBUG('Firewall rules applied successfully.');
-
-    WG_DEBUG('Starting Cron Job...');
-    await this.startCronJob();
-    WG_DEBUG('Cron Job started successfully.');
   }
 
   // TODO: handle as worker_thread
@@ -255,13 +290,15 @@ class WireGuard {
 
   // Shutdown wireguard
   async Shutdown() {
-    const wgInterface = await Database.interfaces.get();
-    await wg.down(wgInterface.name).catch(() => {});
+    for (const wgInterface of await Database.interfaces.getAll()) {
+      await wg.down(wgInterface.name).catch(() => {});
+    }
   }
 
   async Restart() {
-    const wgInterface = await Database.interfaces.get();
-    await wg.restart(wgInterface.name);
+    for (const wgInterface of await Database.interfaces.getAllEnabled()) {
+      await wg.restart(wgInterface.name);
+    }
   }
 
   async cronJob() {

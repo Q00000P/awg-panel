@@ -17,6 +17,39 @@ type Options = {
 const wgExecutable =
   typeof WG_ENV !== 'undefined' ? WG_ENV.WG_EXECUTABLE : 'dev';
 
+// --- AmneziaWG 3.1 helpers ---
+
+// With header protection the message-type field is encrypted, so H1-H4 stay
+// at stock WireGuard values (Amnezia's generator does the same).
+function awgHeaders(wgInterface: InterfaceType) {
+  if (wgInterface.headerProtectionKey) {
+    return { H1: '1', H2: '2', H3: '3', H4: '4' } as const;
+  }
+  return {
+    H1: wgInterface.h1,
+    H2: wgInterface.h2,
+    H3: wgInterface.h3,
+    H4: wgInterface.h4,
+  } as const;
+}
+
+// Amnezia writes the full 3.1 set on both ends, except DisableCookies which
+// only does anything on the receiving side under load.
+function awg31Params(wgInterface: InterfaceType, side: 'server' | 'client') {
+  return {
+    HeaderProtectionKey: wgInterface.headerProtectionKey,
+    ContentPaddingAddition: wgInterface.contentPaddingAddition,
+    RekeyAfterTime: wgInterface.rekeyAfterTime,
+    RekeyTimeout: wgInterface.rekeyTimeout,
+    RejectAfterTime: wgInterface.rejectAfterTime,
+    KeepaliveTimeout: wgInterface.keepaliveTimeout,
+    MaxHandshakeAttempts: wgInterface.maxHandshakeAttempts,
+    RandomTrailers: wgInterface.randomTrailers ? 'on' : null,
+    DisableCookies:
+      side === 'server' && wgInterface.disableCookies ? 'on' : null,
+  } as const;
+}
+
 export const wg = {
   generateServerPeer: (
     client: Omit<ClientType, 'createdAt' | 'updatedAt'>,
@@ -69,15 +102,13 @@ AllowedIPs = ${allowedIps.join(', ')}${extraLines.length ? `\n${extraLines.join(
         S2: wgInterface.s2,
         S3: wgInterface.s3,
         S4: wgInterface.s4,
-        H1: wgInterface.h1,
-        H2: wgInterface.h2,
-        H3: wgInterface.h3,
-        H4: wgInterface.h4,
+        ...awgHeaders(wgInterface),
         I1: wgInterface.i1,
         I2: wgInterface.i2,
         I3: wgInterface.i3,
         I4: wgInterface.i4,
         I5: wgInterface.i5,
+        ...awg31Params(wgInterface, 'server'),
       } as const;
 
       awgLines = Object.entries(parameters)
@@ -138,15 +169,13 @@ PostDown = ${iptablesTemplate(hooks.postDown, wgInterface)}`;
         S2: wgInterface.s2,
         S3: wgInterface.s3,
         S4: wgInterface.s4,
-        H1: wgInterface.h1,
-        H2: wgInterface.h2,
-        H3: wgInterface.h3,
-        H4: wgInterface.h4,
+        ...awgHeaders(wgInterface),
         I1: client.i1,
         I2: client.i2,
         I3: client.i3,
         I4: client.i4,
         I5: client.i5,
+        ...awg31Params(wgInterface, 'client'),
       } as const;
 
       awgLines = Object.entries(parameters)

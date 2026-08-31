@@ -4,6 +4,7 @@ import { userConfig } from './schema';
 import type { UserConfigUpdateType } from './types';
 
 import { wgInterface } from '#db/schema';
+import { DEFAULT_INTERFACE } from '#server/utils/types';
 import type { DBType } from '#db/sqlite';
 
 function createPreparedStatement(db: DBType) {
@@ -23,8 +24,8 @@ export class UserConfigService {
     this.#statements = createPreparedStatement(db);
   }
 
-  async get() {
-    const userConfig = await this.#statements.get.execute({ interface: 'wg0' });
+  async get(name: string = DEFAULT_INTERFACE) {
+    const userConfig = await this.#statements.get.execute({ interface: name });
 
     if (!userConfig) {
       throw new Error('User config not found');
@@ -40,27 +41,34 @@ export class UserConfigService {
    *
    * sets port of user config and interface
    */
-  updateHostPort(host: string, port: number) {
+  updateHostPort(
+    host: string,
+    port: number,
+    name: string = DEFAULT_INTERFACE
+  ) {
     return this.#db.transaction(async (tx) => {
       await tx
         .update(userConfig)
         .set({ host, port })
-        .where(eq(userConfig.id, 'wg0'))
+        .where(eq(userConfig.id, name))
         .execute();
 
       await tx
         .update(wgInterface)
         .set({ port })
-        .where(eq(wgInterface.name, 'wg0'))
+        .where(eq(wgInterface.name, name))
         .execute();
     });
   }
 
-  update(data: Partial<UserConfigUpdateType>) {
+  update(
+    data: Partial<UserConfigUpdateType>,
+    name: string = DEFAULT_INTERFACE
+  ) {
     return this.#db
       .update(userConfig)
       .set(data)
-      .where(eq(userConfig.id, 'wg0'))
+      .where(eq(userConfig.id, name))
       .execute();
   }
 }

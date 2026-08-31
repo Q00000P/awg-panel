@@ -1,5 +1,6 @@
 <template>
   <main v-if="data">
+    <AdminInterfaceSelect />
     <FormElement @submit.prevent="submit">
       <FormGroup>
         <FormHeading>{{ $t('admin.config.connection') }}</FormHeading>
@@ -40,7 +41,7 @@
           :label="$t('general.mtu')"
           :description="$t('admin.config.mtuDesc')"
         />
-        <FormNumberField
+        <FormTextField
           id="defaultPersistentKeepalive"
           v-model="data.defaultPersistentKeepalive"
           :label="$t('general.persistentKeepalive')"
@@ -114,16 +115,25 @@
 <script lang="ts" setup>
 const globalStore = useGlobalStore();
 
+const { query: ifaceQuery } = useAdminInterface();
+
 const { data: _data, refresh } = await useFetch(`/api/admin/userconfig`, {
   method: 'get',
+  query: ifaceQuery,
+  watch: [ifaceQuery],
 });
 
 const data = toRef(_data.value);
+
+watch(_data, (v) => {
+  data.value = v;
+});
 
 const _submit = useSubmit(
   (data) =>
     $fetch(`/api/admin/userconfig`, {
       method: 'post',
+      query: ifaceQuery.value,
       body: data,
     }),
   { revert }

@@ -83,7 +83,7 @@
               :description="$t('client.mtuDesc')"
               :label="$t('general.mtu')"
             />
-            <FormNumberField
+            <FormTextField
               id="persistentKeepalive"
               v-model="data.persistentKeepalive"
               :description="$t('client.persistentKeepaliveDesc')"

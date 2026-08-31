@@ -133,7 +133,8 @@
     "firewallIps": "Разрешённые фаерволом IP-адреса",
     "firewallIpsDesc": "IP‑адреса/CIDR-диапазоны, к которым может получить доступ клиент (проверка на сервере). Оставьте пустым, будут использоваться «Разрешённые IP‑адреса» (AllowedIPs). Поддерживается фильтрация по портам и протоколам. Подробности см. в документации.",
     "downloadPng": "Скачать PNG",
-    "copyPng": "Копировать PNG"
+    "copyPng": "Копировать PNG",
+    "interface": "Интерфейс"
   },
   "dialog": {
     "change": "Изменить",
@@ -242,7 +243,8 @@
     "interface": {
       "cidr": "CIDR",
       "device": "Устройство",
-      "cidrValid": "CIDR должен быть корректным"
+      "cidrValid": "CIDR должен быть корректным",
+      "name": "Имя интерфейса: строчные латинские буквы, цифры, - или _"
     },
     "otl": "Одноразовая ссылка",
     "stringMalformed": "Строка имеет неверный формат",
@@ -251,11 +253,15 @@
     "enabled": "Включено",
     "mtu": "MTU",
     "port": "Порт",
-    "persistentKeepalive": "Постоянное поддержание соединения",
+    "persistentKeepalive": "Persistent Keepalive: число или диапазон min-max",
     "address": "IP‑адрес",
     "dns": "DNS",
     "allowedIps": "Разрешённые IP‑адреса",
-    "file": "Файл"
+    "file": "Файл",
+    "awg": {
+      "range": "Диапазон min-max (например 10-100) или пусто",
+      "headerProtectionKey": "Ключ base64, 'auto' или пусто"
+    }
   },
   "hooks": {
     "preUp": "PreUp",
@@ -303,6 +309,25 @@
     "i5Label": "Специальный мусорный пакет 5 (I5)",
     "i5Description": "Пакет имитации протокола в hex формате: <b 0x...>",
     "mtuNote": "Значения зависят от MTU",
-    "obfuscationParameters": "Параметры обфускации AmneziaWG"
+    "obfuscationParameters": "Параметры обфускации AmneziaWG",
+    "awg31Parameters": "Параметры AmneziaWG 3.1",
+    "headerProtectionKeyLabel": "Ключ защиты заголовков",
+    "headerProtectionKeyDescription": "Включает header protection AWG 3.1. Пусто = режим AWG 2.0. Введите 'auto', чтобы сгенерировать ключ при следующем перезапуске. Должен совпадать у всех клиентов — после смены перевыпустите конфиги. Требует S1-S4 >= 12; H1-H4 при этом рендерятся как 1/2/3/4",
+    "contentPaddingAdditionLabel": "Дополнительный паддинг",
+    "contentPaddingAdditionDescription": "Случайная добавка к каждому пакету, диапазон min-max (например 10-100). На MTU не влияет: ограничен размером самого крупного уже отправленного пакета",
+    "rekeyAfterTimeLabel": "Rekey after time",
+    "rekeyAfterTimeDescription": "Секунды до инициации нового хендшейка клиентом, диапазон (например 100-120). У WireGuard фиксированные 120",
+    "rekeyTimeoutLabel": "Rekey timeout",
+    "rekeyTimeoutDescription": "Секунды между повторами хендшейка, диапазон (например 3-7). У WireGuard фиксированные 5",
+    "rejectAfterTimeLabel": "Reject after time",
+    "rejectAfterTimeDescription": "Секунды, после которых сессия принудительно пересоздаётся, диапазон (например 200-240). Минимум держите хотя бы на 60 с выше максимума RekeyAfterTime",
+    "keepaliveTimeoutLabel": "Keepalive timeout",
+    "keepaliveTimeoutDescription": "Секунды простоя до отправки keepalive, диапазон (например 5-15). У WireGuard фиксированные 10",
+    "maxHandshakeAttemptsLabel": "Макс. попыток хендшейка",
+    "maxHandshakeAttemptsDescription": "Лимит повторов хендшейка, диапазон (например 5-8). Попытки x RekeyTimeout должны быть меньше RejectAfterTime",
+    "randomTrailersLabel": "Случайные хвосты",
+    "randomTrailersDescription": "Дописывать случайные байты в конец пакетов. Должно совпадать с обеих сторон — сервер без него отбрасывает хендшейки с хвостами. На данных не работает, если задан ContentPaddingAddition",
+    "disableCookiesLabel": "Отключить cookies",
+    "disableCookiesDescription": "Только сервер. Под нагрузкой отключает cookie-reply И rate limiter по IP. Убирает отпечаток для зондирования, но снимает защиту от флуда хендшейками"
   }
 }

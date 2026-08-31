@@ -104,7 +104,8 @@ function getPrivateInformation() {
   const obj: Record<string, { ipv4: string[]; ipv6: string[] }> = {};
 
   for (const name of interfaceNames) {
-    if (name === 'wg0') {
+    // Skip our own tunnels — any interface managed by this panel
+    if (/^(wg|awg)\d+$/.test(name)) {
       continue;
     }
 

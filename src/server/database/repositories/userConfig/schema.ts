@@ -13,7 +13,8 @@ export const userConfig = sqliteTable('user_configs_table', {
       onUpdate: 'cascade',
     }),
   defaultMtu: int('default_mtu').notNull(),
-  defaultPersistentKeepalive: int('default_persistent_keepalive').notNull(),
+  // int or "min-max" range (AWG 3.1)
+  defaultPersistentKeepalive: text('default_persistent_keepalive').notNull(),
   defaultDns: text('default_dns', { mode: 'json' }).$type<string[]>().notNull(),
   defaultAllowedIps: text('default_allowed_ips', { mode: 'json' })
     .$type<string[]>()

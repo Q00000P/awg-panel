@@ -5,6 +5,7 @@ import { wgInterface } from './schema';
 import type { InterfaceCidrUpdateType, InterfaceUpdateType } from './types';
 
 import { nextIPFromUsedAddresses } from '#server/utils/ip';
+import { DEFAULT_INTERFACE } from '#server/utils/types';
 import { client as clientSchema } from '#db/schema';
 import type { DBType } from '#db/sqlite';
 
@@ -40,44 +41,65 @@ export class InterfaceService {
     this.#statements = createPreparedStatement(db);
   }
 
-  async get() {
+  async get(name: string = DEFAULT_INTERFACE) {
     const wgInterface = await this.#statements.get.execute({
-      interface: 'wg0',
+      interface: name,
     });
     if (!wgInterface) {
-      throw new Error('Interface not found');
+      throw new Error(`Interface ${name} not found`);
     }
     return wgInterface;
   }
 
-  updateKeyPair(privateKey: string, publicKey: string) {
+  /** All interfaces, in creation order. */
+  getAll() {
+    return this.#db.query.wgInterface.findMany().execute();
+  }
+
+  /** Only interfaces that should be brought up. */
+  async getAllEnabled() {
+    const all = await this.getAll();
+    return all.filter((i) => i.enabled);
+  }
+
+  updateKeyPair(
+    privateKey: string,
+    publicKey: string,
+    name: string = DEFAULT_INTERFACE
+  ) {
     return this.#statements.updateKeyPair.execute({
-      interface: 'wg0',
+      interface: name,
       privateKey,
       publicKey,
     });
   }
 
-  update(data: InterfaceUpdateType) {
+  update(data: InterfaceUpdateType, name: string = DEFAULT_INTERFACE) {
     return this.#db
       .update(wgInterface)
       .set(data)
-      .where(eq(wgInterface.name, 'wg0'))
+      .where(eq(wgInterface.name, name))
       .execute();
   }
 
-  setFirewallEnabled(firewallEnabled: boolean) {
+  setFirewallEnabled(
+    firewallEnabled: boolean,
+    name: string = DEFAULT_INTERFACE
+  ) {
     return this.#statements.setFirewallEnabled.execute({
-      interface: 'wg0',
+      interface: name,
       firewallEnabled,
     });
   }
 
-  updateCidr(data: InterfaceCidrUpdateType) {
+  updateCidr(
+    data: InterfaceCidrUpdateType,
+    name: string = DEFAULT_INTERFACE
+  ) {
     return this.#db.transaction(async (tx) => {
       const oldCidr = await tx.query.wgInterface
         .findFirst({
-          where: eq(wgInterface.name, 'wg0'),
+          where: eq(wgInterface.name, name),
           columns: { ipv4Cidr: true, ipv6Cidr: true },
         })
         .execute();
@@ -89,10 +111,13 @@ export class InterfaceService {
       await tx
         .update(wgInterface)
         .set(data)
-        .where(eq(wgInterface.name, 'wg0'))
+        .where(eq(wgInterface.name, name))
         .execute();
 
-      const clients = await tx.query.client.findMany().execute();
+      // Only clients on this interface are re-addressed
+      const clients = await tx.query.client
+        .findMany({ where: eq(clientSchema.interfaceId, name) })
+        .execute();
       const ipv4Addresses = new Set(
         clients.map((client) => client.ipv4Address)
       );

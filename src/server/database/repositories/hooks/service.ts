@@ -4,6 +4,7 @@ import { hooks } from './schema';
 import type { HooksUpdateType } from './types';
 
 import type { DBType } from '#db/sqlite';
+import { DEFAULT_INTERFACE } from '#server/utils/types';
 
 function createPreparedStatement(db: DBType) {
   return {
@@ -22,19 +23,19 @@ export class HooksService {
     this.#statements = createPreparedStatement(db);
   }
 
-  async get() {
-    const hooks = await this.#statements.get.execute({ interface: 'wg0' });
+  async get(name: string = DEFAULT_INTERFACE) {
+    const hooks = await this.#statements.get.execute({ interface: name });
     if (!hooks) {
-      throw new Error('Hooks not found');
+      throw new Error(`Hooks for ${name} not found`);
     }
     return hooks;
   }
 
-  update(data: HooksUpdateType) {
+  update(data: HooksUpdateType, name: string = DEFAULT_INTERFACE) {
     return this.#db
       .update(hooks)
       .set(data)
-      .where(eq(hooks.id, 'wg0'))
+      .where(eq(hooks.id, name))
       .execute();
   }
 }

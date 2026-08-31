@@ -2,7 +2,10 @@ import { readValidatedBody } from 'h3';
 
 import Database from '#server/utils/Database';
 import WireGuard from '#server/utils/WireGuard';
-import { definePermissionEventHandler } from '#server/utils/handler';
+import {
+  definePermissionEventHandler,
+  getInterfaceParam,
+} from '#server/utils/handler';
 import { validateZod } from '#server/utils/types';
 import { UserConfigUpdateSchema } from '#db/repositories/userConfig/types';
 
@@ -14,7 +17,7 @@ export default definePermissionEventHandler(
       event,
       validateZod(UserConfigUpdateSchema, event)
     );
-    await Database.userConfigs.update(data);
+    await Database.userConfigs.update(data, getInterfaceParam(event));
     await WireGuard.saveConfig();
     return { success: true };
   }

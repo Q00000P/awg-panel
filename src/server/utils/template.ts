@@ -19,11 +19,13 @@ export function removeNewlines(templ: string) {
  * - ipv4Cidr: IPv4 CIDR
  * - ipv6Cidr: IPv6 CIDR
  * - device: Network device
+ * - name: Interface name
  * - port: Port number
  * - uiPort: UI port number
  */
 export function iptablesTemplate(templ: string, wgInterface: InterfaceType) {
   return template(removeNewlines(templ), {
+    name: wgInterface.name,
     ipv4Cidr: wgInterface.ipv4Cidr,
     ipv6Cidr: wgInterface.ipv6Cidr,
     device: wgInterface.device,
