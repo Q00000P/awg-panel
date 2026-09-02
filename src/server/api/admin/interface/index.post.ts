@@ -41,9 +41,9 @@ export default definePermissionEventHandler(
 
     const name = getInterfaceParam(event);
     await Database.interfaces.update(data, name);
-    // Клиентские конфиги собираются из userconfig, а не из интерфейса.
-    // Без зеркалирования клиент получает дефолты wg-easy (Jmin/Jmax 10/1000,
-    // пустые I1-I5), даже если интерфейс настроен.
+    // РљР»РёРµРЅС‚СЃРєРёРµ РєРѕРЅС„РёРіРё СЃРѕР±РёСЂР°СЋС‚СЃСЏ РёР· userconfig, Р° РЅРµ РёР· РёРЅС‚РµСЂС„РµР№СЃР°.
+    // Р‘РµР· Р·РµСЂРєР°Р»РёСЂРѕРІР°РЅРёСЏ РєР»РёРµРЅС‚ РїРѕР»СѓС‡Р°РµС‚ РґРµС„РѕР»С‚С‹ wg-easy (Jmin/Jmax 10/1000,
+    // РїСѓСЃС‚С‹Рµ I1-I5), РґР°Р¶Рµ РµСЃР»Рё РёРЅС‚РµСЂС„РµР№СЃ РЅР°СЃС‚СЂРѕРµРЅ.
     await Database.userConfigs.update(
       {
         defaultJC: data.jC,

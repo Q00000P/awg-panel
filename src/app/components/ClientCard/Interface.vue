@@ -18,7 +18,7 @@ const { data: interfaces } = await useFetch('/api/interfaces');
 const showBadge = computed(
   () => (interfaces.value?.length ?? 0) > 1 && !!props.client.interfaceId
 );
-// /api/interfaces óæå îòäà¸ò isAwg31 (ïî íàëè÷èþ headerProtectionKey)
+// /api/interfaces ÑƒÐ¶Ðµ Ð¾Ñ‚Ð´Ð°Ñ‘Ñ‚ isAwg31 (Ð¿Ð¾ Ð½Ð°Ð»Ð¸Ñ‡Ð¸ÑŽ headerProtectionKey)
 const badgeText = computed(() => {
   const id = props.client.interfaceId;
   const i = interfaces.value?.find((x) => x.name === id);
