@@ -1,5 +1,5 @@
 <template>
-  <BaseDialog>
+  <BaseDialog content-class="max-w-xl">
     <template #trigger>
       <slot />
     </template>
@@ -8,7 +8,7 @@
         <img
           ref="img"
           :src="qrCode"
-          class="mx-auto block h-auto w-[min(85vw,600px)] max-w-none"
+          class="mx-auto block h-auto w-full"
         />
       </div>
     </template>
