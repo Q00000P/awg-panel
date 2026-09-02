@@ -39,7 +39,24 @@ export default definePermissionEventHandler(
       }
     }
 
-    await Database.interfaces.update(data, getInterfaceParam(event));
+    const name = getInterfaceParam(event);
+    await Database.interfaces.update(data, name);
+    // Клиентские конфиги собираются из userconfig, а не из интерфейса.
+    // Без зеркалирования клиент получает дефолты wg-easy (Jmin/Jmax 10/1000,
+    // пустые I1-I5), даже если интерфейс настроен.
+    await Database.userConfigs.update(
+      {
+        defaultJC: data.jC,
+        defaultJMin: data.jMin,
+        defaultJMax: data.jMax,
+        defaultI1: data.i1,
+        defaultI2: data.i2,
+        defaultI3: data.i3,
+        defaultI4: data.i4,
+        defaultI5: data.i5,
+      },
+      name
+    );
     await WireGuard.saveConfig();
     return { success: true };
   }
