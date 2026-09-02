@@ -19,12 +19,10 @@ const wgExecutable =
 
 // --- AmneziaWG 3.1 helpers ---
 
-// With header protection the message-type field is encrypted, so H1-H4 stay
-// at stock WireGuard values (Amnezia's generator does the same).
+// H1-H4 берём из интерфейса всегда. С header protection они на проводе
+// не видны (тип сообщения зашифрован), но конфиги 2.0 и 3.1 выглядят
+// одинаково, и модуль 3.1 их принимает.
 function awgHeaders(wgInterface: InterfaceType) {
-  if (wgInterface.headerProtectionKey) {
-    return { H1: '1', H2: '2', H3: '3', H4: '4' } as const;
-  }
   return {
     H1: wgInterface.h1,
     H2: wgInterface.h2,
