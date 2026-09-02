@@ -4,8 +4,12 @@
       <slot />
     </template>
     <template #description>
-      <div class="bg-white">
-        <img ref="img" :src="qrCode" />
+      <div class="bg-white p-3">
+        <img
+          ref="img"
+          :src="qrCode"
+          class="mx-auto block h-auto w-[min(85vw,600px)] max-w-none"
+        />
       </div>
     </template>
     <template #actions>

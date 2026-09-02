@@ -21,8 +21,10 @@ export function encodeQRCodeTerm(config: string): string {
 }
 
 function tryECCModes<T>(callback: (ecc: ErrorCorrection) => T): T {
-  // defined manually, as qr's ECMode is in wrong order
-  const ECMode = ['high', 'quartile', 'medium', 'low'] as const;
+  // От low к high: чем ниже коррекция, тем меньше модулей на тот же конфиг,
+  // и тем проще камере. Раньше брался первый влезающий уровень начиная с
+  // high — на длинных AWG-конфигах это давало предельно плотный QR.
+  const ECMode = ['low', 'medium', 'quartile', 'high'] as const;
   for (const ecc of ECMode) {
     try {
       return callback(ecc);

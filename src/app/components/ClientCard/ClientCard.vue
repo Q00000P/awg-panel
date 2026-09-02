@@ -40,6 +40,7 @@
         <ClientCardQRCode :client="client" />
         <ClientCardConfig :client="client" />
         <ClientCardOneTimeLinkBtn :client="client" />
+        <ClientCardDelete :client="client" />
       </div>
     </div>
   </div>
