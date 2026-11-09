@@ -133,6 +133,7 @@
       </FormGroup>
       <FormGroup v-if="globalStore.information?.isAwg">
         <FormHeading>{{ $t('awg.awg31Parameters') }}</FormHeading>
+        <div class="col-span-full text-sm">{{ $t('awg.rangeNote') }}</div>
         <FormNullTextField
           id="headerProtectionKey"
           v-model="data.headerProtectionKey"
@@ -229,6 +230,8 @@
 </template>
 
 <script setup lang="ts">
+import { $fetch } from '#imports';
+
 const globalStore = useGlobalStore();
 
 const { t } = useI18n();

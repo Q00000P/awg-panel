@@ -8,9 +8,7 @@ export default definePermissionEventHandler(
   'admin',
   'any',
   async ({ event }) => {
-    const wgInterface = await Database.interfaces.get(
-      getInterfaceParam(event)
-    );
+    const wgInterface = await Database.interfaces.get(getInterfaceParam(event));
 
     return {
       ...wgInterface,

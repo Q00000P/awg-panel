@@ -21,7 +21,11 @@
             v-model="interfaceId"
             class="rounded-lg border border-gray-300 bg-white p-2 text-sm dark:border-neutral-600 dark:bg-neutral-700"
           >
-            <option v-for="i in enabledInterfaces" :key="i.name" :value="i.name">
+            <option
+              v-for="i in enabledInterfaces"
+              :key="i.name"
+              :value="i.name"
+            >
               {{ i.name }} — {{ i.isAwg31 ? 'AWG 3.1' : 'AWG 2.0' }}
             </option>
           </select>
@@ -42,6 +46,8 @@
 </template>
 
 <script lang="ts" setup>
+import { $fetch } from '#imports';
+
 const name = ref<string>('');
 const expiresAt = ref<string | null>(null);
 const interfaceId = ref<string | undefined>(undefined);

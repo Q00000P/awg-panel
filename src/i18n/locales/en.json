@@ -23,7 +23,7 @@
     "disable2faDesc": "Enter your password to disable Two Factor Authentication.",
     "linkOauth": "Link your account with an external provider",
     "unlinkOauth": "Unlink",
-    "linkedWith": "Linked with {0}",
+    "linkedWith": "Linked with {provider}",
     "providerDisabled": "Your currently linked provider is not enabled"
   },
   "general": {
@@ -78,7 +78,7 @@
   },
   "login": {
     "signIn": "Sign In",
-    "signInWith": "Sign in with {0}",
+    "signInWith": "Sign in with {provider}",
     "or": "or",
     "rememberMe": "Remember me",
     "rememberMeDesc": "Stay logged after closing the browser",
@@ -99,17 +99,16 @@
     "expireDateDesc": "Date the client will be disabled. Blank for permanent",
     "delete": "Delete",
     "deleteClient": "Delete Client",
-    "deleteDialog1": "Are you sure you want to delete",
-    "deleteDialog2": "This action cannot be undone.",
+    "deleteDialog": "Are you sure you want to delete {name}? This action cannot be undone.",
     "enabled": "Enabled",
     "address": "Address",
     "serverAllowedIps": "Server Allowed IPs",
     "otlDesc": "Generate short one time link",
     "permanent": "Permanent",
-    "createdOn": "Created on ",
-    "lastSeen": "Last seen on ",
-    "totalDownload": "Total Download: ",
-    "totalUpload": "Total Upload: ",
+    "createdOn": "Created on {date}",
+    "lastSeen": "Last seen on {date}",
+    "totalDownload": "Total Download: {total}",
+    "totalUpload": "Total Upload: {total}",
     "newClient": "New Client",
     "disableClient": "Disable Client",
     "enableClient": "Enable Client",
@@ -155,6 +154,9 @@
     "sectionAdvanced": "Advanced",
     "noItems": "No items",
     "nullNoItems": "No items. Using global config",
+    "nullNotSet": "Not set",
+    "set": "Set",
+    "unset": "Unset",
     "add": "Add"
   },
   "admin": {
@@ -201,16 +203,16 @@
   },
   "zod": {
     "generic": {
-      "required": "{0} is required",
-      "validNumber": "{0} must be a valid number",
-      "validNumberRange": "{0} must be a valid number or number range",
-      "validString": "{0} must be a valid string",
-      "validBoolean": "{0} must be a valid boolean",
-      "validArray": "{0} must be a valid array",
-      "stringMin": "{0} must be at least {1} Character",
-      "stringMax": "{0} must be at most {1} Character",
-      "numberMin": "{0} must be at least {1}",
-      "numberMax": "{0} must be at most {1}"
+      "required": "{field} is required",
+      "validNumber": "{field} must be a valid number",
+      "validNumberRange": "{field} must be a valid number or number range",
+      "validString": "{field} must be a valid string",
+      "validBoolean": "{field} must be a valid boolean",
+      "validArray": "{field} must be a valid array",
+      "stringMin": "{field} must be at least {min} Character",
+      "stringMax": "{field} must be at most {max} Character",
+      "numberMin": "{field} must be at least {min}",
+      "numberMax": "{field} must be at most {max}"
     },
     "client": {
       "id": "Client ID",
@@ -247,10 +249,12 @@
       "device": "Device",
       "cidrValid": "CIDR must be valid",
       "routingTable": "Routing table must be auto, off, or a table number",
-      "name": "Interface name must be lowercase letters, digits, - or _"
+      "name": "Interface name must be lowercase letters, digits, - or _",
+      "headerProtectionJunkSize": "Junk sizes S1-S4 must be at least 12 when a Header Protection Key is set"
     },
     "otl": "One Time link",
     "stringMalformed": "String is malformed",
+    "keyMalformed": "Key must be a 32 byte base64 encoded key",
     "body": "Body must be a valid object",
     "hook": "Hook",
     "enabled": "Enabled",
@@ -311,9 +315,7 @@
     "i4Description": "Protocol mimic packet in hex format: <b 0x...>",
     "i5Label": "Special junk packet 5 (I5)",
     "i5Description": "Protocol mimic packet in hex format: <b 0x...>",
-    "mtuNote": "Values depend on the MTU",
-    "obfuscationParameters": "AmneziaWG Obfuscation Parameters",
-    "awg31Parameters": "AmneziaWG 3.1 Parameters",
+    "rangeNote": "The following parameters accept a single number or an inclusive range (0-65535), for example 30 or 30-90",
     "headerProtectionKeyLabel": "Header protection key",
     "headerProtectionKeyDescription": "Enables AWG 3.1 header protection. Empty = AWG 2.0 mode. Type 'auto' to generate a key on next restart. Must match on all clients — reissue configs after changing. Requires S1-S4 >= 12; H1-H4 are then rendered as 1/2/3/4",
     "contentPaddingAdditionLabel": "Content padding addition",
@@ -331,6 +333,9 @@
     "randomTrailersLabel": "Random trailers",
     "randomTrailersDescription": "Append random bytes to packets. Must match on both ends — a server without it rejects trailered handshakes. Ignored on data packets when ContentPaddingAddition is set",
     "disableCookiesLabel": "Disable cookies",
-    "disableCookiesDescription": "Server-only. Under load, disables cookie replies AND the per-IP rate limiter. Hides a probing fingerprint but removes handshake-flood protection"
+    "disableCookiesDescription": "Server-only. Under load, disables cookie replies AND the per-IP rate limiter. Hides a probing fingerprint but removes handshake-flood protection",
+    "mtuNote": "Values depend on the MTU",
+    "obfuscationParameters": "AmneziaWG Obfuscation Parameters",
+    "awg31Parameters": "AmneziaWG 3.1 Parameters"
   }
 }

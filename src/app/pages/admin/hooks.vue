@@ -34,6 +34,8 @@
 </template>
 
 <script setup lang="ts">
+import { $fetch } from '#imports';
+
 const { query: ifaceQuery } = useAdminInterface();
 
 const { data: _data, refresh } = await useFetch(`/api/admin/hooks`, {

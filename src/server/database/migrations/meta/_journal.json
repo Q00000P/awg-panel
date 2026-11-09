@@ -64,6 +64,20 @@
       "when": 1788140060105,
       "tag": "0008_awg31",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1794246962948,
+      "tag": "0009_awg31_client",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1794246967031,
+      "tag": "0010_hooks_interface_template",
+      "breakpoints": true
     }
   ]
 }

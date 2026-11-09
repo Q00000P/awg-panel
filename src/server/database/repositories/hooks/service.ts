@@ -32,10 +32,6 @@ export class HooksService {
   }
 
   update(data: HooksUpdateType, name: string = DEFAULT_INTERFACE) {
-    return this.#db
-      .update(hooks)
-      .set(data)
-      .where(eq(hooks.id, name))
-      .execute();
+    return this.#db.update(hooks).set(data).where(eq(hooks.id, name)).execute();
   }
 }

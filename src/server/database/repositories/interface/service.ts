@@ -92,10 +92,7 @@ export class InterfaceService {
     });
   }
 
-  updateCidr(
-    data: InterfaceCidrUpdateType,
-    name: string = DEFAULT_INTERFACE
-  ) {
+  updateCidr(data: InterfaceCidrUpdateType, name: string = DEFAULT_INTERFACE) {
     return this.#db.transaction(async (tx) => {
       const oldCidr = await tx.query.wgInterface
         .findFirst({

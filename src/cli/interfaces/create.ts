@@ -150,7 +150,10 @@ export default defineCommand({
         defaultPersistentKeepalive:
           baseConfig?.defaultPersistentKeepalive ?? '0',
         defaultDns: baseConfig?.defaultDns ?? ['1.1.1.1'],
-        defaultAllowedIps: baseConfig?.defaultAllowedIps ?? ['0.0.0.0/0', '::/0'],
+        defaultAllowedIps: baseConfig?.defaultAllowedIps ?? [
+          '0.0.0.0/0',
+          '::/0',
+        ],
         host,
         port,
       });
