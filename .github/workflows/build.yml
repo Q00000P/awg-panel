@@ -33,11 +33,17 @@ jobs:
       - name: Set up Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Build id
+        id: build_id
+        run: echo "id=awg.${{ github.run_number }}.${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
           context: .
           platforms: linux/amd64
+          build-args: |
+            AWG_BUILD=${{ steps.build_id.outputs.id }}
           push: true
           tags: |
             ghcr.io/q00000p/awg-panel:latest

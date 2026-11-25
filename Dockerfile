@@ -58,6 +58,12 @@ COPY --from=build /app/amneziawg-tools/src/wg /usr/bin/awg
 COPY --from=build /app/amneziawg-tools/src/wg-quick/linux.bash /usr/bin/awg-quick
 RUN chmod +x /usr/bin/awg /usr/bin/awg-quick
 
+# fork: build id (CI: awg.<run number>.<short sha>), see server/utils/config.ts.
+# Declared late so it does not invalidate the layers above.
+ARG AWG_BUILD=""
+ENV AWG_BUILD=$AWG_BUILD
+LABEL org.opencontainers.image.version="$AWG_BUILD"
+
 # Install Linux packages
 RUN apk add --no-cache \
     dpkg \

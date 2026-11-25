@@ -10,7 +10,12 @@ import {
   isValidOauthProvider,
 } from '#server/utils/oauth';
 
-export const RELEASE = 'v' + packageJson.version;
+// fork: CI passes the build (awg.<run>.<sha>) as semver build metadata — shown
+// in the footer / /api/information, ignored by the upstream update check (gt)
+export const RELEASE =
+  'v' +
+  packageJson.version +
+  (process.env.AWG_BUILD ? `+${process.env.AWG_BUILD}` : '');
 
 export const SERVER_DEBUG = createDebug('Server');
 
