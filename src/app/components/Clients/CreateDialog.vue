@@ -53,7 +53,8 @@ const expiresAt = ref<string | null>(null);
 const interfaceId = ref<string | undefined>(undefined);
 const clientsStore = useClientsStore();
 
-const { data: interfaces } = await useFetch('/api/interfaces');
+const { data: interfaces, refresh: refreshInterfaces } =
+  await useFetch('/api/interfaces');
 
 const enabledInterfaces = computed(
   () => interfaces.value?.filter((i) => i.enabled) ?? []
@@ -66,19 +67,32 @@ const { t } = useI18n();
 
 defineProps<{ triggerClass?: string }>();
 
-function resetOnOpen(open: boolean) {
+// fork: 3.1 is the default; 2.0 (Keenetic, WireSock) has to be picked
+function defaultInterface() {
+  return (
+    enabledInterfaces.value.find((i) => i.isAwg31)?.name ??
+    enabledInterfaces.value[0]?.name
+  );
+}
+
+async function resetOnOpen(open: boolean) {
   if (!open) return;
 
   name.value = '';
   expiresAt.value = null;
-  interfaceId.value = enabledInterfaces.value[0]?.name;
+  interfaceId.value = defaultInterface();
+  // the list may be stale (fetched before login / before awg1 was added)
+  await refreshInterfaces();
+  if (!enabledInterfaces.value.some((i) => i.name === interfaceId.value)) {
+    interfaceId.value = defaultInterface();
+  }
 }
 
 function createClient() {
   return _createClient({
     name: name.value,
     expiresAt: expiresAt.value,
-    interfaceId: showInterfacePicker.value ? interfaceId.value : undefined,
+    interfaceId: interfaceId.value,
   });
 }
 

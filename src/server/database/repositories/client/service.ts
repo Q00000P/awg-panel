@@ -169,6 +169,17 @@ export class ClientService {
     return this.#statements.findById.execute({ id });
   }
 
+  async #defaultInterface() {
+    const interfaces = await this.#db.query.wgInterface.findMany().execute();
+    const enabled = interfaces.filter((i) => i.enabled);
+    return (
+      enabled.find((i) => !!i.headerProtectionKey)?.name ??
+      enabled.find((i) => i.name === DEFAULT_INTERFACE)?.name ??
+      enabled[0]?.name ??
+      DEFAULT_INTERFACE
+    );
+  }
+
   /**
    * Returns one client without sensitive data
    */
@@ -177,7 +188,9 @@ export class ClientService {
   }
 
   async create({ name, expiresAt, interfaceId }: ClientCreateType) {
-    const ifaceName = interfaceId ?? DEFAULT_INTERFACE;
+    // fork: without an explicit interface a new client goes to 3.1 if the
+    // host has one (2.0 only for clients that cannot do 3.1, picked by hand)
+    const ifaceName = interfaceId ?? (await this.#defaultInterface());
     const privateKey = await wg.generatePrivateKey();
     const publicKey = await wg.getPublicKey(privateKey);
     const preSharedKey = await wg.generatePreSharedKey();
